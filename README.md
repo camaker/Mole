@@ -62,6 +62,16 @@ mo --version            # Show installed version
 - Protect caches with `mo clean --whitelist`; defaults cover Playwright, HuggingFace, and Maven paths.
 - Use `mo touchid` to approve sudo with Touch ID instead of typing your password.
 
+## Quick Launchers
+
+Install Raycast integration with one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tw93/mole/main/integrations/setup-raycast.sh | bash
+```
+
+For Alfred and macOS Shortcuts, see [integrations/README.md](integrations/README.md).
+
 ## Features in Detail
 
 ### Deep System Cleanup
