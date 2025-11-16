@@ -1074,6 +1074,7 @@ func (m model) View() string {
 				file := m.largeFiles[idx]
 				shortPath := displayPath(file.path)
 				shortPath = truncateMiddle(shortPath, 35)
+				paddedPath := padName(shortPath, 35)
 				entryPrefix := "    "
 				nameColor := ""
 				sizeColor := colorGray
@@ -1087,7 +1088,7 @@ func (m model) View() string {
 				size := humanizeBytes(file.size)
 				bar := coloredProgressBar(file.size, maxLargeSize, 0)
 				fmt.Fprintf(&b, "%s%s%2d.%s %s  |  📄 %s%s%s  %s%10s%s\n",
-					entryPrefix, numColor, idx+1, colorReset, bar, nameColor, shortPath, colorReset, sizeColor, size, colorReset)
+					entryPrefix, numColor, idx+1, colorReset, bar, nameColor, paddedPath, colorReset, sizeColor, size, colorReset)
 			}
 		}
 	} else {
