@@ -156,22 +156,22 @@ $ mo status
 
 Mole Status  Health ● 92  MacBook Pro · Apple M4 Pro · 32.0 GB · 460.4 GB · macOS 14.5
 
-⚙ CPU ──────────────────────     ▦ Memory ─────────────────────
-Total  ████████████░░░░░░ 45.2%  Used   ███████████░░░░░░ 58.4%
-0.82 / 1.05 / 1.23  (8 cores)    14.2 GB / 24.0 GB total
-Core1  ███████████████░░░ 78.3%  Free   ████████░░░░░░░░░ 41.6%
-Core2  ████████████░░░░░░ 62.1%  9.8 GB available
+⚙ CPU ──────────────────────          ▦ Memory ─────────────────────
+Total  ████████████░░░░░░ 45.2%       Used   ███████████░░░░░░ 58.4%
+0.82 / 1.05 / 1.23  (8 cores)         14.2 GB / 24.0 GB total
+Core1  ███████████████░░░ 78.3%       Free   ████████░░░░░░░░░ 41.6%
+Core2  ████████████░░░░░░ 62.1%       9.8 GB available
 
-▤ Disk ──────────────────────    ▮ Power ──────────────────────
-Used   █████████████░░░░░ 67.2%  100%   ██████████████████ 100%
-156.3 GB free                    Charged ⚡
-Read   ▮▯▯▯▯  2.1 MB/s           Normal · 423 cycles
-Write  ▮▮▮▯▯  18.3 MB/s          58°C · 1200 RPM
+▤ Disk ──────────────────────       ▮ Power ──────────────────────
+Used   █████████████░░░░░ 67.2%       100%   ██████████████████ 100%
+156.3 GB free                         Charged ⚡
+Read   ▮▯▯▯▯  2.1 MB/s                Normal · 423 cycles
+Write  ▮▮▮▯▯  18.3 MB/s               58°C · 1200 RPM
 
-⇅ Network ───────────────────    ▶ Processes ───────────────────
-Down   ▮▮▯▯▯  3.2 MB/s           Code      ▮▮▮▮▯  42.1%
-Up     ▮▯▯▯▯  0.8 MB/s           Chrome    ▮▮▮▯▯  28.3%
-Proxy: HTTP · 192.168.1.100      Terminal  ▮▯▯▯▯  12.5%
+⇅ Network ───────────────────       ▶ Processes ───────────────────
+Down   ▮▮▯▯▯  3.2 MB/s                Code      ▮▮▮▮▯  42.1%
+Up     ▮▯▯▯▯  0.8 MB/s                Chrome    ▮▮▮▯▯  28.3%
+Proxy: HTTP · 192.168.1.100          Terminal  ▮▯▯▯▯  12.5%
 ```
 
 Health score is calculated from CPU usage, memory pressure, disk space, temperature, and I/O load. Color-coded: 90-100 green, 75-89 light green, 60-74 yellow, 40-59 orange, 0-39 red.
