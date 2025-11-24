@@ -489,7 +489,8 @@ request_sudo_access() {
     sudo -k
 
     # Use default sudo prompt (Touch ID behaves more reliably without a custom prompt)
-    local sudo_cmd=(sudo -v)
+    local -a sudo_cmd=(sudo -v)
+    local -a sudo_stdin_cmd=(sudo -S -p "" -v)
 
     # Optional timeout command to prevent hangs
     local timeout_cmd=""
@@ -499,57 +500,137 @@ request_sudo_access() {
             break
         fi
     done
+    if [[ -n "$timeout_cmd" ]]; then
+        sudo_cmd=("$timeout_cmd" 20 "${sudo_cmd[@]}")
+        sudo_stdin_cmd=("$timeout_cmd" 20 "${sudo_stdin_cmd[@]}")
+    fi
 
-    # Helper to attempt sudo with optional IO redirection and timeout
+    local has_touchid="false"
+    if check_touchid_support; then
+        has_touchid="true"
+    fi
+
+    # Helper to attempt sudo with optional IO redirection
     _run_sudo_attempt() {
         local in="$1"
         local out="$2"
         local err="${3:-$2}"
 
-        local cmd=("${sudo_cmd[@]}")
-        if [[ -n "$timeout_cmd" ]]; then
-            cmd=("$timeout_cmd" 20 "${cmd[@]}")
-        fi
-
         if [[ -n "$in" ]]; then
             if [[ -n "$out" ]]; then
-                "${cmd[@]}" < "$in" > "$out" 2> "${err:-$out}"
+                "${sudo_cmd[@]}" < "$in" > "$out" 2> "${err:-$out}"
             else
-                "${cmd[@]}" < "$in"
+                "${sudo_cmd[@]}" < "$in"
             fi
         else
-            "${cmd[@]}"
+            "${sudo_cmd[@]}"
         fi
     }
 
-    # Try current TTY first
-    if _run_sudo_attempt "" ""; then
-        sudo -n true 2> /dev/null || true
+    # Prefer real TTY attachment for Touch ID/password prompts
+    if [[ "$has_touchid" == "true" ]]; then
+        local -a sudo_attempts=()
+        local active_tty=""
+        if command -v tty > /dev/null 2>&1; then
+            active_tty=$(tty 2> /dev/null || echo "")
+            if [[ -n "$active_tty" && -r "$active_tty" && -w "$active_tty" ]]; then
+                sudo_attempts+=("$active_tty")
+            fi
+        fi
+        if [[ -r /dev/tty && -w /dev/tty ]]; then
+            local has_dev_tty=false
+            for candidate in "${sudo_attempts[@]}"; do
+                if [[ "$candidate" == "/dev/tty" ]]; then
+                    has_dev_tty=true
+                    break
+                fi
+            done
+            if [[ "$has_dev_tty" == "false" ]]; then
+                sudo_attempts+=("/dev/tty")
+            fi
+        fi
+        sudo_attempts+=("") # fallback to inheriting stdio
+
+        for tty_target in "${sudo_attempts[@]}"; do
+            if [[ -n "$tty_target" ]]; then
+                if _run_sudo_attempt "$tty_target" "$tty_target" "$tty_target"; then
+                    sudo -n true 2> /dev/null || true
+                    return 0
+                fi
+            else
+                if _run_sudo_attempt "" ""; then
+                    sudo -n true 2> /dev/null || true
+                    return 0
+                fi
+            fi
+        done
+
+        # Last resort for Touch ID path: spawn a fresh pty
+        if command -v script > /dev/null 2>&1; then
+            local script_cmd=(script -q /dev/null)
+            if [[ -n "$timeout_cmd" ]]; then
+                script_cmd=("$timeout_cmd" 20 "${script_cmd[@]}")
+            fi
+            if "${script_cmd[@]}" "${sudo_cmd[@]}"; then
+                sudo -n true 2> /dev/null || true
+                return 0
+            fi
+        fi
+    fi
+
+    # Manual password prompt (handles Macs without Touch ID reliably)
+    _prompt_password_manually() {
+        local tty_path=""
+        if [[ -r /dev/tty && -w /dev/tty ]]; then
+            tty_path="/dev/tty"
+        else
+            tty_path=$(tty 2> /dev/null || echo "")
+            if [[ -n "$tty_path" ]]; then
+                if [[ ! -r "$tty_path" || ! -w "$tty_path" ]]; then
+                    tty_path=""
+                fi
+            fi
+        fi
+
+        [[ -z "$tty_path" ]] && return 1
+
+        local password=""
+        local saved_stty=""
+        if command -v stty > /dev/null 2>&1; then
+            saved_stty=$(stty -g < "$tty_path" 2> /dev/null || echo "")
+            stty -echo < "$tty_path" 2> /dev/null || true
+        fi
+
+        printf "${PURPLE}${ICON_ARROW}${NC} Enter admin password: " > "$tty_path" 2> /dev/null || true
+        IFS= read -r password < "$tty_path" || password=""
+        printf "\n" > "$tty_path" 2> /dev/null || true
+
+        if [[ -n "$saved_stty" ]]; then
+            stty "$saved_stty" < "$tty_path" 2> /dev/null || stty echo < "$tty_path" 2> /dev/null || true
+        else
+            stty echo < "$tty_path" 2> /dev/null || true
+        fi
+
+        if [[ -z "$password" ]]; then
+            unset password
+            return 1
+        fi
+
+        if printf '%s\n' "$password" | "${sudo_stdin_cmd[@]}" > /dev/null 2>&1; then
+            unset password
+            sudo -n true 2> /dev/null || true
+            return 0
+        fi
+
+        unset password
+        return 1
+    }
+
+    if _prompt_password_manually; then
         return 0
     fi
 
-    # Always talk to the real terminal so Touch ID/password prompts show up
-    local sudo_tty="/dev/tty"
-    if [[ -r "$sudo_tty" ]]; then
-        if _run_sudo_attempt "$sudo_tty" "$sudo_tty" "$sudo_tty"; then
-            sudo -n true 2> /dev/null || true
-            return 0
-        fi
-    fi
-
-    # Last resort: spawn a fresh pty (helps when stdin/out were redirected)
-    if command -v script > /dev/null 2>&1; then
-        local script_cmd=(script -q /dev/null)
-        if [[ -n "$timeout_cmd" ]]; then
-            script_cmd=("$timeout_cmd" 20 "${script_cmd[@]}")
-        fi
-        if "${script_cmd[@]}" "${sudo_cmd[@]}"; then
-            sudo -n true 2> /dev/null || true
-            return 0
-        fi
-    fi
-
-    # Fallback for environments without /dev/tty or script
+    # Fallback for non-interactive environments
     if _run_sudo_attempt "" ""; then
         sudo -n true 2> /dev/null || true
         return 0
