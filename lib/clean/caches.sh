@@ -214,3 +214,57 @@ clean_project_caches() {
         stop_inline_spinner
     fi
 }
+
+# Clean Spotlight user caches
+# Cleans CoreSpotlight index cache and Spotlight saved state
+# System Spotlight index (/System/Volumes/Data/.Spotlight-V100) is never touched
+clean_spotlight_caches() {
+    local cleaned_size=0
+    local cleaned_count=0
+
+    # CoreSpotlight user cache (can grow very large, safe to delete)
+    local spotlight_cache="$HOME/Library/Metadata/CoreSpotlight"
+    if [[ -d "$spotlight_cache" ]]; then
+        local size_kb=$(get_path_size_kb "$spotlight_cache")
+        if [[ "$size_kb" -gt 0 ]]; then
+            if [[ "$DRY_RUN" != "true" ]]; then
+                safe_remove "$spotlight_cache" true && {
+                    ((cleaned_size += size_kb))
+                    ((cleaned_count++))
+                    echo -e "  ${GREEN}${ICON_SUCCESS}${NC} Spotlight cache ($(bytes_to_human $((size_kb * 1024))))"
+                    note_activity
+                }
+            else
+                ((cleaned_size += size_kb))
+                echo -e "  ${YELLOW}→${NC} Spotlight cache (would clean $(bytes_to_human $((size_kb * 1024))))"
+                note_activity
+            fi
+        fi
+    fi
+
+    # Spotlight saved application state
+    local spotlight_state="$HOME/Library/Saved Application State/com.apple.spotlight.Spotlight.savedState"
+    if [[ -d "$spotlight_state" ]]; then
+        local size_kb=$(get_path_size_kb "$spotlight_state")
+        if [[ "$size_kb" -gt 0 ]]; then
+            if [[ "$DRY_RUN" != "true" ]]; then
+                safe_remove "$spotlight_state" true && {
+                    ((cleaned_size += size_kb))
+                    ((cleaned_count++))
+                    echo -e "  ${GREEN}${ICON_SUCCESS}${NC} Spotlight state ($(bytes_to_human $((size_kb * 1024))))"
+                    note_activity
+                }
+            else
+                ((cleaned_size += size_kb))
+                echo -e "  ${YELLOW}→${NC} Spotlight state (would clean $(bytes_to_human $((size_kb * 1024))))"
+                note_activity
+            fi
+        fi
+    fi
+
+    if [[ $cleaned_size -gt 0 ]]; then
+        ((files_cleaned += cleaned_count))
+        ((total_size_cleaned += cleaned_size))
+        ((total_items++))
+    fi
+}

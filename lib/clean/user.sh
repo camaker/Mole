@@ -79,6 +79,10 @@ clean_finder_metadata() {
 clean_macos_system_caches() {
     safe_clean ~/Library/Saved\ Application\ State/* "Saved application states"
     safe_clean ~/Library/Caches/com.apple.spotlight "Spotlight cache"
+
+    # Clean Spotlight user caches (CoreSpotlight can grow very large)
+    clean_spotlight_caches
+
     safe_clean ~/Library/Caches/com.apple.photoanalysisd "Photo analysis cache"
     safe_clean ~/Library/Caches/com.apple.akd "Apple ID cache"
     safe_clean ~/Library/Caches/com.apple.Safari/Webpage\ Previews/* "Safari webpage previews"
