@@ -288,9 +288,12 @@ register_temp_dir() {
 }
 
 # Create temp file with prefix (for analyze.sh compatibility)
+# Compatible with both BSD mktemp (macOS default) and GNU mktemp (coreutils)
 mktemp_file() {
     local prefix="${1:-mole}"
-    mktemp -t "$prefix"
+    # Use TMPDIR if set, otherwise /tmp
+    # Add .XXXXXX suffix to work with both BSD and GNU mktemp
+    mktemp "${TMPDIR:-/tmp}/${prefix}.XXXXXX"
 }
 
 # Cleanup all tracked temp files and directories

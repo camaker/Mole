@@ -278,7 +278,7 @@ perform_updates() {
 _perform_appstore_update() {
     echo -e "${BLUE}Updating App Store apps...${NC}"
     local appstore_log
-    appstore_log=$(mktemp -t mole-appstore 2> /dev/null || echo "/tmp/mole-appstore.log")
+    appstore_log=$(mktemp "${TMPDIR:-/tmp}/mole-appstore.XXXXXX" 2> /dev/null || echo "/tmp/mole-appstore.log")
 
     if [[ "$appstore_needs_fallback" == "true" ]]; then
         echo -e "  ${GRAY}Installing all available updates${NC}"
@@ -311,7 +311,7 @@ _perform_macos_update() {
     echo -e "${YELLOW}Note:${NC} System update may require restart"
 
     local macos_log
-    macos_log=$(mktemp -t mole-macos 2> /dev/null || echo "/tmp/mole-macos.log")
+    macos_log=$(mktemp "${TMPDIR:-/tmp}/mole-macos.XXXXXX" 2> /dev/null || echo "/tmp/mole-macos.log")
 
     if [[ "$macos_needs_fallback" == "true" ]]; then
         if sudo softwareupdate -i -r 2>&1 | tee "$macos_log" | grep -v "^$"; then
