@@ -20,9 +20,11 @@ teardown_file() {
     fi
 }
 
-create_fake_sudo() {
+create_fake_utils() {
     local dir="$1"
     mkdir -p "$dir"
+
+    # Fake sudo
     cat > "$dir/sudo" <<'SCRIPT'
 #!/usr/bin/env bash
 if [[ "$1" == "-n" || "$1" == "-v" ]]; then
@@ -31,6 +33,17 @@ fi
 exec "$@"
 SCRIPT
     chmod +x "$dir/sudo"
+
+    # Fake bioutil
+    cat > "$dir/bioutil" <<'SCRIPT'
+#!/usr/bin/env bash
+if [[ "$1" == "-r" ]]; then
+    echo "Touch ID: 1"
+    exit 0
+fi
+exit 0
+SCRIPT
+    chmod +x "$dir/bioutil"
 }
 
 @test "touchid status reflects pam file contents" {
@@ -61,7 +74,7 @@ auth       sufficient     pam_opendirectory.so
 EOF
 
     fake_bin="$HOME/fake-bin"
-    create_fake_sudo "$fake_bin"
+    create_fake_utils "$fake_bin"
 
     run env PATH="$fake_bin:$PATH" MOLE_PAM_SUDO_FILE="$pam_file" "$PROJECT_ROOT/bin/touchid.sh" enable
     [ "$status" -eq 0 ]
@@ -77,7 +90,7 @@ auth       sufficient     pam_opendirectory.so
 EOF
 
     fake_bin="$HOME/fake-bin-disable"
-    create_fake_sudo "$fake_bin"
+    create_fake_utils "$fake_bin"
 
     run env PATH="$fake_bin:$PATH" MOLE_PAM_SUDO_FILE="$pam_file" "$PROJECT_ROOT/bin/touchid.sh" disable
     [ "$status" -eq 0 ]

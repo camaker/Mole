@@ -1,0 +1,34 @@
+# Mole Cleanup Preview - 2025-12-12 15:31:00
+#
+# How to protect files:
+# 1. Copy any path below to ~/.config/mole/whitelist
+# 2. Run: mo clean --whitelist
+#
+# Example:
+#   /Users/*/Library/Caches/com.example.app
+#
+
+
+=== User essentials ===
+
+=== Finder metadata ===
+
+=== macOS system caches ===
+
+=== Sandboxed app caches ===
+
+=== Browsers ===
+
+=== Cloud storage ===
+
+=== Office applications ===
+
+=== Developer tools ===
+
+=== Development applications ===
+
+=== Virtual machine tools ===
+
+=== Application Support ===
+
+=== Uninstalled app data ===

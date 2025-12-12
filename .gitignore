@@ -41,11 +41,7 @@ temp/
 
 # AI Assistant Instructions
 .claude/
-CLAUDE.md
-AGENT.md
-GEMINI.md
 .cursorrules
-copilot-instructions.md
 
 # Go build artifacts (development)
 cmd/analyze/analyze

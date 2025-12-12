@@ -411,7 +411,7 @@ EOF
 }
 
 @test "get_path_size_kb returns zero for missing directory" {
-    run env HOME="$HOME" PROJECT_ROOT="$PROJECT_ROOT" bash --noprofile --norc << 'EOF'
+    run env HOME="$HOME" PROJECT_ROOT="$PROJECT_ROOT" MO_DEBUG=0 bash --noprofile --norc << 'EOF'
 set -euo pipefail
 source "$PROJECT_ROOT/lib/core/common.sh"
 size=$(get_path_size_kb "/nonexistent/path")
@@ -426,7 +426,7 @@ EOF
     mkdir -p "$HOME/test_size"
     dd if=/dev/zero of="$HOME/test_size/file.dat" bs=1024 count=10 2>/dev/null
 
-    run env HOME="$HOME" PROJECT_ROOT="$PROJECT_ROOT" bash --noprofile --norc << 'EOF'
+    run env HOME="$HOME" PROJECT_ROOT="$PROJECT_ROOT" MO_DEBUG=0 bash --noprofile --norc << 'EOF'
 set -euo pipefail
 source "$PROJECT_ROOT/lib/core/common.sh"
 size=$(get_path_size_kb "$HOME/test_size")

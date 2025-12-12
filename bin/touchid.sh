@@ -60,7 +60,7 @@ show_status() {
 enable_touchid() {
     # Cleanup trap
     local temp_file=""
-    trap '[[ -n "$temp_file" ]] && rm -f "$temp_file"' EXIT
+    trap '[[ -n "${temp_file:-}" ]] && rm -f "${temp_file:-}"' EXIT
 
     # First check if system supports Touch ID
     if ! supports_touchid; then
@@ -122,7 +122,7 @@ enable_touchid() {
 disable_touchid() {
     # Cleanup trap
     local temp_file=""
-    trap '[[ -n "$temp_file" ]] && rm -f "$temp_file"' EXIT
+    trap '[[ -n "${temp_file:-}" ]] && rm -f "${temp_file:-}"' EXIT
 
     if ! is_touchid_configured; then
         echo -e "${YELLOW}Touch ID is not currently enabled${NC}"
