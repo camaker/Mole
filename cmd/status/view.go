@@ -12,24 +12,25 @@ import (
 
 var (
 	titleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#C79FD7")).Bold(true)
-	subtleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9E9E9E"))
+	subtleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#737373"))
 	warnStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD75F"))
-	dangerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6B6B")).Bold(true)
-	okStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#87D787"))
-	lineStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#5A5A5A"))
-	hatStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000"))
+	dangerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5F5F")).Bold(true)
+	okStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#A5D6A7"))
+	lineStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#404040"))
+	hatStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4D4D"))
+	primaryStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9"))
 )
 
 const (
 	colWidth    = 38
-	iconCPU     = "⚙"
-	iconMemory  = "▦"
-	iconGPU     = "▣"
-	iconDisk    = "▤"
+	iconCPU     = "◉"
+	iconMemory  = "◫"
+	iconGPU     = "◧"
+	iconDisk    = "▥"
 	iconNetwork = "⇅"
-	iconBattery = "▮"
-	iconSensors = "♨"
-	iconProcs   = "▶"
+	iconBattery = "◪"
+	iconSensors = "◈"
+	iconProcs   = "❊"
 )
 
 // Check if it's Christmas season (Dec 10-31)
@@ -167,39 +168,46 @@ func renderHeader(m MetricsSnapshot, errMsg string, animFrame int, termWidth int
 	// Title
 	title := titleStyle.Render("Mole Status")
 
-	// Health Score with color and label
+	// Health Score
 	scoreStyle := getScoreStyle(m.HealthScore)
 	scoreText := subtleStyle.Render("Health ") + scoreStyle.Render(fmt.Sprintf("● %d", m.HealthScore))
 
-	// Hardware info
+	// Hardware info - compact for single line
 	infoParts := []string{}
 	if m.Hardware.Model != "" {
-		infoParts = append(infoParts, m.Hardware.Model)
+		infoParts = append(infoParts, primaryStyle.Render(m.Hardware.Model))
 	}
 	if m.Hardware.CPUModel != "" {
 		cpuInfo := m.Hardware.CPUModel
+		// Add GPU core count if available (compact format)
 		if len(m.GPU) > 0 && m.GPU[0].CoreCount > 0 {
-			cpuInfo += fmt.Sprintf(" (%d GPU cores)", m.GPU[0].CoreCount)
+			cpuInfo += fmt.Sprintf(" (%dGPU)", m.GPU[0].CoreCount)
 		}
 		infoParts = append(infoParts, cpuInfo)
 	}
+	// Combine RAM and Disk to save space
+	var specs []string
 	if m.Hardware.TotalRAM != "" {
-		infoParts = append(infoParts, m.Hardware.TotalRAM)
+		specs = append(specs, m.Hardware.TotalRAM)
 	}
 	if m.Hardware.DiskSize != "" {
-		infoParts = append(infoParts, m.Hardware.DiskSize)
+		specs = append(specs, m.Hardware.DiskSize)
+	}
+	if len(specs) > 0 {
+		infoParts = append(infoParts, strings.Join(specs, "/"))
 	}
 	if m.Hardware.OSVersion != "" {
 		infoParts = append(infoParts, m.Hardware.OSVersion)
 	}
 
+	// Single line compact header
 	headerLine := title + "  " + scoreText + "  " + subtleStyle.Render(strings.Join(infoParts, " · "))
 
 	// Running mole animation
 	mole := getMoleFrame(animFrame, termWidth)
 
 	if errMsg != "" {
-		return lipgloss.JoinVertical(lipgloss.Left, headerLine, "", mole, dangerStyle.Render(errMsg), "")
+		return lipgloss.JoinVertical(lipgloss.Left, headerLine, "", mole, dangerStyle.Render("ERROR: "+errMsg), "")
 	}
 	return headerLine + "\n" + mole
 }
@@ -580,11 +588,11 @@ func renderSensorsCard(sensors []SensorReading) cardData {
 
 func renderCard(data cardData, width int, height int) string {
 	titleText := data.icon + " " + data.title
-	lineLen := width - lipgloss.Width(titleText) - 1
+	lineLen := width - lipgloss.Width(titleText) - 2
 	if lineLen < 4 {
 		lineLen = 4
 	}
-	header := titleStyle.Render(titleText) + " " + lineStyle.Render(strings.Repeat("─", lineLen))
+	header := titleStyle.Render(titleText) + "  " + lineStyle.Render(strings.Repeat("╌", lineLen))
 	content := header + "\n" + strings.Join(data.lines, "\n")
 
 	// Pad to target height
@@ -596,7 +604,7 @@ func renderCard(data cardData, width int, height int) string {
 }
 
 func progressBar(percent float64) string {
-	total := 18
+	total := 16
 	if percent < 0 {
 		percent = 0
 	}
@@ -604,9 +612,6 @@ func progressBar(percent float64) string {
 		percent = 100
 	}
 	filled := int(percent / 100 * float64(total))
-	if filled > total {
-		filled = total
-	}
 
 	var builder strings.Builder
 	for i := 0; i < total; i++ {
@@ -620,7 +625,7 @@ func progressBar(percent float64) string {
 }
 
 func batteryProgressBar(percent float64) string {
-	total := 18
+	total := 16
 	if percent < 0 {
 		percent = 0
 	}
@@ -628,9 +633,6 @@ func batteryProgressBar(percent float64) string {
 		percent = 100
 	}
 	filled := int(percent / 100 * float64(total))
-	if filled > total {
-		filled = total
-	}
 
 	var builder strings.Builder
 	for i := 0; i < total; i++ {
@@ -645,9 +647,9 @@ func batteryProgressBar(percent float64) string {
 
 func colorizePercent(percent float64, s string) string {
 	switch {
-	case percent >= 90:
+	case percent >= 85:
 		return dangerStyle.Render(s)
-	case percent >= 70:
+	case percent >= 60:
 		return warnStyle.Render(s)
 	default:
 		return okStyle.Render(s)

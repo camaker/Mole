@@ -84,11 +84,25 @@ func isZeroLoad(avg load.AvgStat) bool {
 	return avg.Load1 == 0 && avg.Load5 == 0 && avg.Load15 == 0
 }
 
+var (
+	// Package-level cache for core topology
+	lastTopologyAt time.Time
+	cachedP, cachedE int
+	topologyTTL    = 10 * time.Minute
+)
+
 // getCoreTopology returns P-core and E-core counts on Apple Silicon.
 // Returns (0, 0) on non-Apple Silicon or if detection fails.
 func getCoreTopology() (pCores, eCores int) {
 	if runtime.GOOS != "darwin" {
 		return 0, 0
+	}
+
+	now := time.Now()
+	if cachedP > 0 || cachedE > 0 {
+		if now.Sub(lastTopologyAt) < topologyTTL {
+			return cachedP, cachedE
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -130,6 +144,8 @@ func getCoreTopology() (pCores, eCores int) {
 		eCores = level1Count
 	}
 
+	cachedP, cachedE = pCores, eCores
+	lastTopologyAt = now
 	return pCores, eCores
 }
 

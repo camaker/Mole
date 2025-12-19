@@ -14,6 +14,13 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 )
 
+var (
+	// Package-level cache for heavy system_profiler data
+	lastPowerAt   time.Time
+	cachedPower   string
+	powerCacheTTL = 30 * time.Second
+)
+
 func collectBatteries() (batts []BatteryStatus, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -22,10 +29,12 @@ func collectBatteries() (batts []BatteryStatus, err error) {
 		}
 	}()
 
-	// macOS: pmset
+	// macOS: pmset (fast, for real-time percentage/status)
 	if runtime.GOOS == "darwin" && commandExists("pmset") {
 		if out, err := runCmd(context.Background(), "pmset", "-g", "batt"); err == nil {
-			if batts := parsePMSet(out); len(batts) > 0 {
+			// Get heavy info (health, cycles) from cached system_profiler
+			health, cycles := getCachedPowerData()
+			if batts := parsePMSet(out, health, cycles); len(batts) > 0 {
 				return batts, nil
 			}
 		}
@@ -58,7 +67,7 @@ func collectBatteries() (batts []BatteryStatus, err error) {
 	return nil, errors.New("no battery data found")
 }
 
-func parsePMSet(raw string) []BatteryStatus {
+func parsePMSet(raw string, health string, cycles int) []BatteryStatus {
 	lines := strings.Split(raw, "\n")
 	var out []BatteryStatus
 	var timeLeft string
@@ -101,9 +110,6 @@ func parsePMSet(raw string) []BatteryStatus {
 			continue
 		}
 
-		// Get battery health and cycle count
-		health, cycles := getBatteryHealth()
-
 		out = append(out, BatteryStatus{
 			Percent:    percent,
 			Status:     status,
@@ -115,20 +121,12 @@ func parsePMSet(raw string) []BatteryStatus {
 	return out
 }
 
-func getBatteryHealth() (string, int) {
-	if runtime.GOOS != "darwin" {
+// getCachedPowerData returns condition, cycles, and fan speed from cached system_profiler output.
+func getCachedPowerData() (health string, cycles int) {
+	out := getSystemPowerOutput()
+	if out == "" {
 		return "", 0
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	out, err := runCmd(ctx, "system_profiler", "SPPowerDataType")
-	if err != nil {
-		return "", 0
-	}
-
-	var health string
-	var cycles int
 
 	lines := strings.Split(out, "\n")
 	for _, line := range lines {
@@ -149,6 +147,27 @@ func getBatteryHealth() (string, int) {
 	return health, cycles
 }
 
+func getSystemPowerOutput() string {
+	if runtime.GOOS != "darwin" {
+		return ""
+	}
+
+	now := time.Now()
+	if cachedPower != "" && now.Sub(lastPowerAt) < powerCacheTTL {
+		return cachedPower
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	out, err := runCmd(ctx, "system_profiler", "SPPowerDataType")
+	if err == nil {
+		cachedPower = out
+		lastPowerAt = now
+	}
+	return cachedPower
+}
+
 func collectThermal() ThermalStatus {
 	if runtime.GOOS != "darwin" {
 		return ThermalStatus{}
@@ -156,12 +175,9 @@ func collectThermal() ThermalStatus {
 
 	var thermal ThermalStatus
 
-	// Get fan info from system_profiler
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	out, err := runCmd(ctx, "system_profiler", "SPPowerDataType")
-	if err == nil {
+	// Get fan info from cached system_profiler
+	out := getSystemPowerOutput()
+	if out != "" {
 		lines := strings.Split(out, "\n")
 		for _, line := range lines {
 			lower := strings.ToLower(line)

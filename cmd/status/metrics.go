@@ -138,10 +138,18 @@ type BluetoothDevice struct {
 }
 
 type Collector struct {
-	prevNet    map[string]net.IOCountersStat
-	lastNetAt  time.Time
+	// Static Cache (Collected once at startup)
+	cachedHW   HardwareInfo
+	lastHWAt   time.Time
+	hasStatic  bool
+
+	// Slow Cache (Collected every 30s-1m)
 	lastBTAt   time.Time
 	lastBT     []BluetoothDevice
+
+	// Fast Metrics (Collected every 1 second)
+	prevNet    map[string]net.IOCountersStat
+	lastNetAt  time.Time
 	lastGPUAt  time.Time
 	cachedGPU  []GPUStatus
 	prevDiskIO disk.IOCountersStat
@@ -209,14 +217,32 @@ func (c *Collector) Collect() (MetricsSnapshot, error) {
 	collect(func() (err error) { thermalStats = collectThermal(); return nil })
 	collect(func() (err error) { sensorStats, _ = collectSensors(); return nil })
 	collect(func() (err error) { gpuStats, err = c.collectGPU(now); return })
-	collect(func() (err error) { btStats = c.collectBluetooth(now); return nil })
+	collect(func() (err error) {
+		// Bluetooth is slow, cache for 30s
+		if now.Sub(c.lastBTAt) > 30*time.Second || len(c.lastBT) == 0 {
+			btStats = c.collectBluetooth(now)
+			c.lastBT = btStats
+			c.lastBTAt = now
+		} else {
+			btStats = c.lastBT
+		}
+		return nil
+	})
 	collect(func() (err error) { topProcs = collectTopProcesses(); return nil })
 
 	// Wait for all to complete
 	wg.Wait()
 
 	// Dependent tasks (must run after others)
-	hwInfo := collectHardware(memStats.Total, diskStats)
+	// Dependent tasks (must run after others)
+	// Cache hardware info as it's expensive and rarely changes
+	if !c.hasStatic || now.Sub(c.lastHWAt) > 10*time.Minute {
+		c.cachedHW = collectHardware(memStats.Total, diskStats)
+		c.lastHWAt = now
+		c.hasStatic = true
+	}
+	hwInfo := c.cachedHW
+
 	score, scoreMsg := calculateHealthScore(cpuStats, memStats, diskStats, diskIO, thermalStats)
 
 	return MetricsSnapshot{

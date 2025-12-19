@@ -93,26 +93,42 @@ func collectDisks() ([]DiskStatus, error) {
 	return disks, nil
 }
 
+var (
+	// Package-level cache for external disk status
+	lastDiskCacheAt time.Time
+	diskTypeCache   = make(map[string]bool)
+	diskCacheTTL    = 2 * time.Minute
+)
+
 func annotateDiskTypes(disks []DiskStatus) {
 	if len(disks) == 0 || runtime.GOOS != "darwin" || !commandExists("diskutil") {
 		return
 	}
-	cache := make(map[string]bool)
+
+	now := time.Now()
+	// Clear cache if stale
+	if now.Sub(lastDiskCacheAt) > diskCacheTTL {
+		diskTypeCache = make(map[string]bool)
+		lastDiskCacheAt = now
+	}
+
 	for i := range disks {
 		base := baseDeviceName(disks[i].Device)
 		if base == "" {
 			base = disks[i].Device
 		}
-		if val, ok := cache[base]; ok {
+
+		if val, ok := diskTypeCache[base]; ok {
 			disks[i].External = val
 			continue
 		}
+
 		external, err := isExternalDisk(base)
 		if err != nil {
 			external = strings.HasPrefix(disks[i].Mount, "/Volumes/")
 		}
 		disks[i].External = external
-		cache[base] = external
+		diskTypeCache[base] = external
 	}
 }
 
