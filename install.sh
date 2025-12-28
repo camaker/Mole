@@ -136,8 +136,8 @@ resolve_source_dir() {
 
     start_line_spinner "Fetching Mole source..."
     if command -v curl > /dev/null 2>&1; then
-        if curl -fsSL -o "$tmp/mole.tar.gz" "https://github.com/tw93/mole/archive/refs/heads/main.tar.gz" 2>/dev/null; then
-            if tar -xzf "$tmp/mole.tar.gz" -C "$tmp" 2>/dev/null; then
+        if curl -fsSL -o "$tmp/mole.tar.gz" "https://github.com/tw93/mole/archive/refs/heads/main.tar.gz" 2> /dev/null; then
+            if tar -xzf "$tmp/mole.tar.gz" -C "$tmp" 2> /dev/null; then
                 stop_line_spinner
                 # Extracted folder name: Mole-main (capital M)
                 if [[ -d "$tmp/Mole-main" ]]; then
