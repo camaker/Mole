@@ -103,6 +103,25 @@ is_path_whitelisted() {
     [[ "$1" == *"128.0.0.0"* ]] && return 0
     return 1
 }
+get_path_size_kb() { echo "10240"; }
+bytes_to_human() { echo "10M"; }
+note_activity() { :; }
+export -f is_path_whitelisted get_path_size_kb bytes_to_human note_activity
+
+# Initialize counters
+files_cleaned=0
+total_size_cleaned=0
+total_items=0
+
+clean_chrome_old_versions
+
+# Should only clean 129.0.0.0 (not 128.0.0.0 which is whitelisted)
+echo "Cleaned: $files_cleaned items"
+EOF
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Cleaned: 1 items"* ]]
+}
 
 @test "clean_edge_updater_old_versions keeps latest version" {
     run env HOME="$HOME" PROJECT_ROOT="$PROJECT_ROOT" DRY_RUN=true bash --noprofile --norc <<'EOF'
@@ -135,25 +154,6 @@ EOF
     [[ "$output" == *"Edge updater old versions"* ]]
     [[ "$output" == *"dry"* ]]
     [[ "$output" == *"Cleaned: 2 items"* ]]
-}
-get_path_size_kb() { echo "10240"; }
-bytes_to_human() { echo "10M"; }
-note_activity() { :; }
-export -f is_path_whitelisted get_path_size_kb bytes_to_human note_activity
-
-# Initialize counters
-files_cleaned=0
-total_size_cleaned=0
-total_items=0
-
-clean_chrome_old_versions
-
-# Should only clean 129.0.0.0 (not 128.0.0.0 which is whitelisted)
-echo "Cleaned: $files_cleaned items"
-EOF
-
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Cleaned: 1 items"* ]]
 }
 
 @test "clean_chrome_old_versions DRY_RUN mode does not delete files" {
