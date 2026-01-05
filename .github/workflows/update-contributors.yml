@@ -31,7 +31,7 @@ jobs:
           svgPath: CONTRIBUTORS.svg
           svgWidth: 1000
           avatarSize: 72
-          avatarMargin: 53
+          avatarMargin: 20
           userNameHeight: 20
           noCommit: true
           includeBots: false
