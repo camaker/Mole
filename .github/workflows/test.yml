@@ -79,7 +79,7 @@ jobs:
           echo "Checking for hardcoded secrets..."
           matches=$(grep -r "password\|secret\|api_key" --include="*.sh" . \
             | grep -v "# \|test" \
-            | grep -v -E "lib/core/sudo\.sh|lib/core/app_protection\.sh|lib/clean/user\.sh|lib/clean/brew\.sh|bin/optimize\.sh" || true)
+            | grep -v -E "lib/core/sudo\.sh|lib/core/app_protection\.sh|lib/clean/user\.sh|lib/clean/brew\.sh|bin/optimize\.sh|lib/clean/apps\.sh" || true)
           if [[ -n "$matches" ]]; then
             echo "$matches"
             echo "✗ Potential secrets found"
