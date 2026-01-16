@@ -119,15 +119,28 @@ remove_apps_from_dock() {
     local plist="$HOME/Library/Preferences/com.apple.dock.plist"
     [[ -f "$plist" ]] || return 0
 
-    command -v PlistBuddy > /dev/null 2>&1 || return 0
+    # PlistBuddy is at /usr/libexec/PlistBuddy on macOS
+    [[ -x /usr/libexec/PlistBuddy ]] || return 0
 
     local changed=false
     for target in "${targets[@]}"; do
         local app_path="$target"
-        # Normalize path for comparison - realpath might fail if app is already deleted
+        # Normalize path for comparison - use original path if app already deleted
         local full_path
-        full_path=$(cd "$(dirname "$app_path")" 2> /dev/null && pwd || echo "")
-        [[ -n "$full_path" ]] && full_path="$full_path/$(basename "$app_path")"
+        if full_path=$(cd "$(dirname "$app_path")" 2> /dev/null && pwd); then
+            full_path="$full_path/$(basename "$app_path")"
+        else
+            # App already deleted - use the original path as-is
+            # Remove ~/ prefix and expand to full path if needed
+            if [[ "$app_path" == ~/* ]]; then
+                full_path="$HOME/${app_path#~/}"
+            elif [[ "$app_path" != /* ]]; then
+                # Relative path - skip this entry
+                continue
+            else
+                full_path="$app_path"
+            fi
+        fi
 
         # URL-encode the path for matching against Dock URLs (spaces -> %20)
         local encoded_path="${full_path// /%20}"
