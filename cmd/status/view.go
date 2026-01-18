@@ -131,7 +131,7 @@ type cardData struct {
 }
 
 func renderHeader(m MetricsSnapshot, errMsg string, animFrame int, termWidth int, catHidden bool) string {
-	title := titleStyle.Render("Mole Status")
+	title := titleStyle.Render("Status")
 
 	scoreStyle := getScoreStyle(m.HealthScore)
 	scoreText := subtleStyle.Render("Health ") + scoreStyle.Render(fmt.Sprintf("● %d", m.HealthScore))
@@ -164,6 +164,9 @@ func renderHeader(m MetricsSnapshot, errMsg string, animFrame int, termWidth int
 	}
 	if m.Hardware.OSVersion != "" {
 		infoParts = append(infoParts, m.Hardware.OSVersion)
+	}
+	if m.Uptime != "" {
+		infoParts = append(infoParts, subtleStyle.Render("up "+m.Uptime))
 	}
 
 	headerLine := title + "  " + scoreText + "  " + strings.Join(infoParts, " · ")

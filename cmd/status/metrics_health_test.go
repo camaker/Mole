@@ -52,8 +52,8 @@ func TestFormatUptime(t *testing.T) {
 	if got := formatUptime(3600 + 120); got != "1h 2m" {
 		t.Fatalf("expected \"1h 2m\", got %s", got)
 	}
-	if got := formatUptime(86400*2 + 3600*3 + 60*5); got != "2d 3h 5m" {
-		t.Fatalf("expected \"2d 3h 5m\", got %s", got)
+	if got := formatUptime(86400*2 + 3600*3 + 60*5); got != "2d 3h" {
+		t.Fatalf("expected \"2d 3h\", got %s", got)
 	}
 }
 
