@@ -45,7 +45,7 @@ clean_dev_npm() {
 # Python/pip ecosystem caches.
 clean_dev_python() {
     if command -v pip3 > /dev/null 2>&1; then
-        clean_tool_cache "pip cache" bash -c 'pip3 cache purge >/dev/null 2>&1 || true'
+        clean_tool_cache "pip cache" bash -c 'pip3 cache purge > /dev/null 2>&1 || true'
         note_activity
     fi
     safe_clean ~/.pyenv/cache/* "pyenv cache"
@@ -65,7 +65,7 @@ clean_dev_python() {
 # Go build/module caches.
 clean_dev_go() {
     if command -v go > /dev/null 2>&1; then
-        clean_tool_cache "Go cache" bash -c 'go clean -modcache >/dev/null 2>&1 || true; go clean -cache >/dev/null 2>&1 || true'
+        clean_tool_cache "Go cache" bash -c 'go clean -modcache > /dev/null 2>&1 || true; go clean -cache > /dev/null 2>&1 || true'
         note_activity
     fi
 }
@@ -200,8 +200,8 @@ clean_dev_mobile() {
     # Simulator runtime caches.
     safe_clean ~/Library/Developer/CoreSimulator/Profiles/Runtimes/*/Contents/Resources/RuntimeRoot/System/Library/Caches/* "Simulator runtime cache"
     safe_clean ~/Library/Caches/Google/AndroidStudio*/* "Android Studio cache"
-    safe_clean ~/Library/Caches/CocoaPods/* "CocoaPods cache"
-    safe_clean ~/.cache/flutter/* "Flutter cache"
+    # safe_clean ~/Library/Caches/CocoaPods/* "CocoaPods cache"
+    # safe_clean ~/.cache/flutter/* "Flutter cache"
     safe_clean ~/.android/build-cache/* "Android build cache"
     safe_clean ~/.android/cache/* "Android SDK cache"
     safe_clean ~/Library/Developer/Xcode/UserData/IB\ Support/* "Xcode Interface Builder cache"
@@ -219,7 +219,7 @@ clean_dev_other_langs() {
     safe_clean ~/.bundle/cache/* "Ruby Bundler cache"
     safe_clean ~/.composer/cache/* "PHP Composer cache"
     safe_clean ~/.nuget/packages/* "NuGet packages cache"
-    safe_clean ~/.pub-cache/* "Dart Pub cache"
+    # safe_clean ~/.pub-cache/* "Dart Pub cache"
     safe_clean ~/.cache/bazel/* "Bazel cache"
     safe_clean ~/.cache/zig/* "Zig cache"
     safe_clean ~/Library/Caches/deno/* "Deno cache"
