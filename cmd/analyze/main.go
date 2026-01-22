@@ -584,7 +584,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg.String() {
-	case "q", "ctrl+c":
+	case "q", "ctrl+c", "Q":
 		return m, tea.Quit
 	case "esc":
 		if m.showLargeFiles {
@@ -592,7 +592,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, tea.Quit
-	case "up", "k":
+	case "up", "k", "K":
 		if m.showLargeFiles {
 			if m.largeSelected > 0 {
 				m.largeSelected--
@@ -606,7 +606,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.offset = m.selected
 			}
 		}
-	case "down", "j":
+	case "down", "j", "J":
 		if m.showLargeFiles {
 			if m.largeSelected < len(m.largeFiles)-1 {
 				m.largeSelected++
@@ -622,12 +622,12 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.offset = m.selected - viewport + 1
 			}
 		}
-	case "enter", "right", "l":
+	case "enter", "right", "l", "L":
 		if m.showLargeFiles {
 			return m, nil
 		}
 		return m.enterSelectedDir()
-	case "b", "left", "h":
+	case "b", "left", "h", "B", "H":
 		if m.showLargeFiles {
 			m.showLargeFiles = false
 			return m, nil
@@ -679,7 +679,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.status = fmt.Sprintf("Scanned %s", humanizeBytes(m.totalSize))
 		m.scanning = false
 		return m, nil
-	case "r":
+	case "r", "R":
 		m.multiSelected = make(map[string]bool)
 		m.largeMultiSelected = make(map[string]bool)
 
@@ -728,7 +728,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			m.status = fmt.Sprintf("Scanned %s", humanizeBytes(m.totalSize))
 		}
-	case "o":
+	case "o", "O":
 		// Open selected entries (multi-select aware).
 		const maxBatchOpen = 20
 		if m.showLargeFiles {
