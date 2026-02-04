@@ -379,7 +379,7 @@ scan_purge_targets() {
 
     # Allow forcing find via MO_USE_FIND environment variable
     if [[ "${MO_USE_FIND:-0}" == "1" ]]; then
-        debug "MO_USE_FIND=1: Forcing find instead of fd"
+        debug_log "MO_USE_FIND=1: Forcing find instead of fd"
         use_find=true
     elif command -v fd > /dev/null 2>&1; then
         # Escape regex special characters in target names for fd patterns
@@ -410,20 +410,20 @@ scan_purge_targets() {
         if fd "${fd_args[@]}" "$pattern" "$search_path" 2> /dev/null > "$output_file.raw"; then
             # Check if fd actually found anything - if empty, fallback to find
             if [[ -s "$output_file.raw" ]]; then
-                debug "Using fd for scanning (found results)"
+                debug_log "Using fd for scanning (found results)"
                 use_find=false
                 process_scan_results "$output_file.raw"
             else
-                debug "fd returned empty results, falling back to find"
+                debug_log "fd returned empty results, falling back to find"
                 rm -f "$output_file.raw"
             fi
         else
-            debug "fd command failed, falling back to find"
+            debug_log "fd command failed, falling back to find"
         fi
     fi
 
     if [[ "$use_find" == "true" ]]; then
-        debug "Using find for scanning"
+        debug_log "Using find for scanning"
         # Pruned find avoids descending into heavy directories.
         local prune_dirs=(".git" "Library" ".Trash" "Applications")
         local purge_targets=("${PURGE_TARGETS[@]}")

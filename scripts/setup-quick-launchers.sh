@@ -69,7 +69,7 @@ echo "🐹 Running ${title}..."
 echo ""
 
 # Command to execute
-_MO_RAW_CMD="${raw_cmd}"
+_MO_RAW_CMD='${raw_cmd}'
 _MO_CMD_ESCAPED="${cmd_escaped}"
 
 has_app() {
