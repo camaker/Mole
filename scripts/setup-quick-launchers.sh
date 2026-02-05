@@ -180,11 +180,8 @@ APPLESCRIPT
             fi
             ;;
         Ghostty)
-            if has_bin "ghostty"; then
-                ghostty --command "/bin/zsh" -- -lc "\"\${MO_BIN}\" \${MO_SUBCOMMAND}"
-                return \$?
-            elif [[ -x "/Applications/Ghostty.app/Contents/MacOS/ghostty" ]]; then
-                "/Applications/Ghostty.app/Contents/MacOS/ghostty" --command "/bin/zsh" -- -lc "\"\${MO_BIN}\" \${MO_SUBCOMMAND}"
+            if launcher_available "Ghostty" && command -v open >/dev/null 2>&1; then
+                open -na "Ghostty" --args -e /bin/zsh -lc "\${MO_BIN} \${MO_SUBCOMMAND}"
                 return \$?
             fi
             ;;
