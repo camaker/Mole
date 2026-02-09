@@ -687,7 +687,7 @@ should_protect_data() {
         com.sublimetext.* | com.sublimehq.* | Cursor | Claude | ChatGPT | Ollama)
             return 0
             ;;
-        com.nssurge.* | com.v2ray.* | com.clash.* | ClashX* | Surge* | Shadowrocket* | Quantumult*)
+        com.nssurge.* | com.v2ray.* | com.clash.* | com.clash.app | ClashX* | Surge* | Shadowrocket* | Quantumult*)
             return 0
             ;;
         clash-* | Clash-* | *-clash | *-Clash | clash.* | Clash.* | clash_* | clashverge* | ClashVerge*)
